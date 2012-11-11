@@ -1,12 +1,13 @@
 var vows = require('vows')
 	,assert = require('assert')
-	//,vash = process.argv[2]
-	//	? require(__dirname + '/../build/vash.' + process.argv[2] )
-	//	: require(__dirname + '/../build/vash');
-	//vash = require(__dirname + '/../build/vash')
+	,program = require('commander')
+	,vash
 
+program
+	.option('-w, --whichv <filename>', 'Run test suite against [filename]', 'build/vash.js')
+	.parse( process.argv );
 
-exports.run = function(vash){
+vash = require( __dirname + '/../' + program.whichv )
 
 vash.config.useWith = true;
 vash.config.debug = false;
@@ -23,7 +24,7 @@ var tryCompile = function(str){
 	}
 }
 
-return vows.describe('vash templating library').addBatch({
+vows.describe('vash templating library').addBatch({
 	'a plain text template': {
 		topic: function(){
 			var tpl = vash.compile('<a href="">this is a <br /> simple template</a>');
@@ -1630,6 +1631,5 @@ return vows.describe('vash templating library').addBatch({
 	//	//	// could calling the tpl return a function?
 	//	//}
 	//}
-});
+}).export(module);
 
-}

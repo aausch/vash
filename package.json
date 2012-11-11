@@ -1,7 +1,7 @@
 {
 	"name": "vash",
 	"description": "Razor syntax templates, for JS",
-	"version": "0.5.7-1547",
+	"version": "0.5.7-1578",
 	"author": "Andrew Petersen <senofpeter@gmail.com>",
 	"bin": {
 		"vash": "./bin/vash"
@@ -14,11 +14,14 @@
 	],
 	"repository": "git://github.com/kirbysayshi/vash",
 	"main": "build/vash",
+	"scripts": {
+		"test": "make test-all"
+	},
 	"engines": {
 		"node": ">= 0.6"
 	},
 	"dependencies": {
-		"commander": "0.6.1",
+		"commander": "~1.0.5",
 		"uglify-js": "1.0.6"
 	},
 	"devDependencies": {

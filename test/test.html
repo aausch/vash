@@ -6,38 +6,43 @@
 		
 	</head>
 	<body id="" onload="">
+
+		<script type="text/javascript">
+			// necessary because of loading each component separately
+			var exports = vash = {};
+		</script>
 		
 		<script src="../src/vlexer.js" type="text/javascript" charset="utf-8"></script>
 		<script src="../src/vparser.js" type="text/javascript" charset="utf-8"></script>
 		<script src="../src/vast.js" type="text/javascript" charset="utf-8"></script>
 		<script src="../src/vcompiler.js" type="text/javascript" charset="utf-8"></script>
-		<script src="../src/vash.exports.js" type="text/javascript" charset="utf-8"></script>
-		<!--<script src="../build/vash.closure.min.js" type="text/javascript" charset="utf-8"></script>-->
+		<script src="../src/vexports.js" type="text/javascript" charset="utf-8"></script>
+
+		<script src="../src/vruntime.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../src/vhelpers.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../src/vhelpers.layout.js" type="text/javascript" charset="utf-8"></script>
+		<!--<script src="../build/vash.min.js" type="text/javascript" charset="utf-8"></script>-->
 		
-		<script id="test" type="text/razor-js" charset="utf-8">
-		@function dbgOut(){ <text>debug output</text> }
-
-		Put your test template here, watch console for @dbgOut()! 
-
-		</script>
+		<script id="test" type="text/razor-js" charset="utf-8">@model.what</script>
 
 		<script type="text/javascript" charset="utf-8">
 			
-			var opts = { debugParser: true, debugCompiler: true, debug: true, modelName: 'model' }
+			var opts = { helpersName: 'html', debugParser: true, debugCompiler: true, debug: false, modelName: 'model', favorText: false }
 
 			var lexerContent = document.querySelectorAll('#test')[0].innerHTML;
 			console.log(lexerContent);
-			var l = new VLexer(lexerContent);
+			var l = new vash.VLexer(lexerContent);
 			
 			var tokens = [], tok;
 			while(tok = l.advance()) tokens.push(tok);
+			tokens.forEach(function(tok){ console.log(tok) })
 			tokens.reverse();
 
-			var p = new VParser(tokens, opts);
+			var p = new vash.VParser(tokens, opts);
 			var ast = p.parse();
 
-			var c = new VCompiler(ast, lexerContent);
-			c.debug = true;
+			var c = new vash.VCompiler(ast, lexerContent);
+			//c.debug = true;
 			
 
 		</script>
