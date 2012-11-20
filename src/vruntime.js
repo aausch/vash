@@ -1,14 +1,6 @@
 /*jshint strict:false, asi: false, laxcomma:true, laxbreak:true, boss:true, curly:true, node:true, browser:true, devel:true */
 ;(function(){
 
-	///////////////////////////////////////////////////////////////////////////
-	// CONFIG
-	// Ideally this is where any helper-specific configuration would go, things
-	// such as syntax highlighting callbacks, whether to temporarily disable
-	// html escaping, and others.
-	//
-	// Each helper should define it's configuration options just above its own
-	// definition, for ease of modularity and discoverability.
 
 	// grab/create the global. sigh.
 	vash = typeof vash === 'undefined'
@@ -18,6 +10,90 @@
 				? exports = {}
 				: {}
 		: vash;
+
+	///////////////////////////////////////////////////////////////////////////
+	// EVENT SYSTEM
+
+	vash.asEvented = (function(){
+
+		var asEvented = function(proto){
+			proto.on = on;
+			proto.off = off;
+			proto.emit = emit;
+		}
+
+		var on = function(name, fn){
+			var lib = this._eevees = this._eevees || {};
+
+			var cbs = lib[ name ] || (lib[ name ] = []);
+			cbs.push( fn );
+		}
+
+		var off = function(name, fn){
+			var lib = this._eevees = this._eevees || {};
+
+			// remove all
+			if( !fn ){
+				delete lib[name];
+				return;
+			}
+
+			var cbs = lib[ name ];
+
+			if( !cbs || cbs.length === 0 ) return;
+
+			for(var i = 0, len = cbs.length; i < len; i++ ){
+				if( cbs[i] == fn ){
+					cbs.splice( i, 1 );
+					i--;
+					len--;
+				}
+			}
+		}
+
+		var emit = function( name ){
+			var lib = this._eevees = this._eevees || {}
+				, cbs = lib[ name ] || (lib[ name ] = []);
+
+			if( cbs.length == 0 ) return;
+
+			var args = cbs.slice.call( arguments, 1 )
+				, argsLen = args.length
+				, result;
+
+			cbs = cbs.slice(0);
+
+			for( var i = 0, len = cbs.length; i < len; i++ ){
+				if( argsLen === 0 ){
+					result = cbs[i]();
+				} else if( argsLen === 1 ){
+					result = cbs[i]( args[0] )
+			  } else if( argsLen === 2 ){
+					result = cbs[i]( args[0], args[1] );
+			  } else if( argsLen === 3 ){
+					result = cbs[i]( args[0], args[1], args[2] );
+			  } else {
+					result = cbs[i].apply( null, args );
+			  }
+
+			  if( result === false ){ break; }
+			}
+		}
+
+		return asEvented;
+	}())
+
+	// EVENT SYSTEM
+	///////////////////////////////////////////////////////////////////////////
+
+	///////////////////////////////////////////////////////////////////////////
+	// HELPERS CONSTRUCTOR
+	// Ideally this is where any helper-specific configuration would go, things
+	// such as syntax highlighting callbacks, whether to temporarily disable
+	// html escaping, and others.
+	//
+	// Each helper should define it's configuration options just above its own
+	// definition, for ease of modularity and discoverability.
 
 	var helpers = vash['helpers']
 		,Helpers
@@ -35,7 +111,10 @@
 		vash['helpers']
 			= helpers
 			= Helpers.prototype
-			= { constructor: Helpers, config: {}};
+			= { constructor: Helpers, config: { debugRuntime: false }};
+
+		// AND IT SHALL BE EVENTED.
+		vash.asEvented( Helpers.prototype );
 	}
 
 	// this allows a template to return the context, and coercion
@@ -44,7 +123,7 @@
 		return this.buffer.toString();
 	}
 
-	// CONFIG
+	// HELPERS CONSTRUCTOR
 	///////////////////////////////////////////////////////////////////////////
 
 
@@ -105,7 +184,7 @@
 	// output in a sane manner.
 
 	Buffer = function() {
-		var __vo = [];
+		var __vo = this.__vo = [];
 
 		this.mark = function() {
 			var mark = new Mark( this );
@@ -127,6 +206,16 @@
 			// TODO: should not found behavior call this.empty(),
 			// or return an empty array?
 		};
+
+		this.spliceMark = function( mark, numToRemove, add ){
+			var found = mark.findInBuffer();
+
+			if( found > -1 ){
+				mark.destroy();
+				arguments[0] = found;
+				return __vo.splice.apply( __vo, arguments );
+			}
+		}
 
 		this.empty = function() {
 			return __vo.splice( 0, __vo.length );
@@ -210,6 +299,9 @@
 			return this.markedIndex;
 		}
 
+		helpers.config.debugRuntime && console.log('could not find '
+			+ this.uid + ' in buffer, using indexOf '
+			,this.buffer.indexOf(this.uid), this.buffer.__vo)
 		return this.markedIndex = this.buffer.indexOf( this.uid );
 	}
 
