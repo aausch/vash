@@ -136,10 +136,14 @@ VCP.generate = function(){
 		+ (options.debug ? 'try { \n' : '')
 		+ 'var __vbuffer = HELPERSNAME.buffer; \n'
 		+ 'MODELNAME = MODELNAME || {}; \n'
+		+ 'HELPERSNAME.emit("startrender", HELPERSNAME); \n'
+		+ 'HELPERSNAME.parentContext && HELPERSNAME.parentContext.emit("startchildrender", HELPERSNAME); \n'
 		+ (options.useWith ? 'with( MODELNAME ){ \n' : '');
 
 	var foot = ''
-		+ 'return (__vopts && __vopts.context) \n'
+		+ 'HELPERSNAME.parentContext && HELPERSNAME.parentContext.emit("endchildrender", HELPERSNAME); \n'
+		+ 'HELPERSNAME.emit("endrender", HELPERSNAME); \n'
+		+ 'return (__vopts && __vopts.asContext) \n'
 		+ '  ? HELPERSNAME \n'
 		+ '  : HELPERSNAME.toString(); \n'
 		+ (options.debug ? '} catch( e ){ \n'
@@ -183,7 +187,20 @@ VCompiler.assemble = function( cmpFunc, Helpers ){
 	Helpers = Helpers || vash.helpers.constructor;
 
 	var linked = function( model, opts ){
-		return cmpFunc( model, new Helpers( model ), opts );
+		var ctx = ( opts && opts.context )
+			? opts.context
+			: new Helpers( model );
+
+		ctx.parentContext = ( opts && opts.parentContext )
+			? opts.parentContext
+			: null;
+
+		if( opts ){
+			delete opts.parentContext;
+			delete opts.context;
+		}
+
+		return cmpFunc( model, ctx, opts );
 	}
 
 	linked.toString = function(){
